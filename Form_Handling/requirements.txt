@@ -1,0 +1,7 @@
+click==8.0.4
+et-xmlfile==1.1.0
+# Jinja2==3.0.3
+# MarkupSafe==2.0.1
+openpyxl==3.0.9
+Pillow==8.4.0
+# Werkzeug==2.0.3

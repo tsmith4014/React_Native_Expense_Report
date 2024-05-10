@@ -1,0 +1,9 @@
+As of the current AWS Free Tier offers:
+
+Amazon SES: The free tier includes 62,000 outbound messages per month. However, this is only for emails sent from an Amazon EC2 instance or via AWS SDKs. Emails sent from Amazon Cognito might not be eligible for the free tier.
+
+
+
+Amazon SNS: The free tier includes 1 million publishes and 100 SMS messages per month. However, the free tier for SMS messages is only for messages sent to US phone numbers.
+
+

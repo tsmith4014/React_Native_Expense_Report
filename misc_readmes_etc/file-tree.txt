@@ -1,0 +1,13 @@
+MyExpenseApp/
+├── src/
+│   ├── components/
+│   │   ├── FormScreen.js
+│   │   └── SignInScreen.js
+│   ├── services/
+│   │   ├── authServices.js
+│   │   └── awsConfig.js
+│   └── App.js
+├── .env
+├── .gitignore
+├── package.json
+└── package-lock.json
