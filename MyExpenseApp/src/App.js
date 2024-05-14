@@ -1,6 +1,7 @@
 // // App.js
+// App.js
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, DefaultTheme} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import SignInScreen from './components/SignInScreen';
 import FormScreen from './components/FormScreen';
@@ -9,13 +10,24 @@ import ConfirmSignUpScreen from './components/ConfirmSignUpScreen';
 import ReceiptUploadScreen from './components/ReceiptUploadScreen';
 import HomeScreen from './components/HomeScreen';
 import {AuthProvider} from './services/AuthContext';
+import {StyleSheet} from 'react-native';
 
 const Stack = createStackNavigator();
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#1a1a1a', // Dark background color
+    card: '#1a1a1a', // Background color for header and other card elements
+    text: '#ffffff', // General text color for better readability on dark background
+  },
+};
 
 const App = () => {
   return (
     <AuthProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={MyTheme}>
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Sign Up Screen" component={SignUpScreen} />
@@ -33,6 +45,41 @@ const App = () => {
 };
 
 export default App;
+
+// import React from 'react';
+// import {NavigationContainer} from '@react-navigation/native';
+// import {createStackNavigator} from '@react-navigation/stack';
+// import SignInScreen from './components/SignInScreen';
+// import FormScreen from './components/FormScreen';
+// import SignUpScreen from './components/SignUpScreen';
+// import ConfirmSignUpScreen from './components/ConfirmSignUpScreen';
+// import ReceiptUploadScreen from './components/ReceiptUploadScreen';
+// import HomeScreen from './components/HomeScreen';
+// import {AuthProvider} from './services/AuthContext';
+
+// const Stack = createStackNavigator();
+
+// const App = () => {
+//   return (
+//     <AuthProvider>
+//       <NavigationContainer>
+//         <Stack.Navigator initialRouteName="Home">
+//           <Stack.Screen name="Home" component={HomeScreen} />
+//           <Stack.Screen name="Sign Up Screen" component={SignUpScreen} />
+//           <Stack.Screen
+//             name="Confirm Sign Up Screen"
+//             component={ConfirmSignUpScreen}
+//           />
+//           <Stack.Screen name="Sign In Screen" component={SignInScreen} />
+//           <Stack.Screen name="Travel Form Screen" component={FormScreen} />
+//           <Stack.Screen name="Receipt Upload" component={ReceiptUploadScreen} />
+//         </Stack.Navigator>
+//       </NavigationContainer>
+//     </AuthProvider>
+//   );
+// };
+
+// export default App;
 
 /////////////////////////////////////////////////////////
 

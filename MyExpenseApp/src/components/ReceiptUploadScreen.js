@@ -1,4 +1,5 @@
-//ReceiptUploadScreen.js
+//ReceiptUploadScreen.js;
+
 import React, {useContext, useState} from 'react';
 import {
   View,
@@ -10,18 +11,27 @@ import {
   Text,
   Linking,
   TextInput,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback, // Import to allow dismissing the keyboard
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import Config from 'react-native-config';
 import AuthContext from '../services/AuthContext';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const ReceiptUploadScreen = () => {
   const {token} = useContext(AuthContext);
   const [imageUrl, setImageUrl] = useState(null);
-  const [formData, setFormData] = useState({date: '', price: '', category: ''});
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0], // Initialize date to today's date
+    price: '',
+    category: '',
+  });
   const [showForm, setShowForm] = useState(false);
   const [base64Image, setBase64Image] = useState(null);
   const [fileName, setFileName] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const handleTakePhoto = () => {
     const options = {
@@ -55,71 +65,77 @@ const ReceiptUploadScreen = () => {
   };
 
   const processImage = async imageData => {
-    try {
-      if (!imageData || !imageData.fileName || !imageData.uri) {
-        Alert.alert('Upload Failed', 'Image data is incomplete.');
-        return;
-      }
+    if (!imageData || !imageData.fileName || !imageData.uri) {
+      Alert.alert('Upload Failed', 'Image data is incomplete.');
+      return;
+    }
+    const base64Image = await convertToBase64(imageData.uri);
+    setShowForm(true);
+    setBase64Image(base64Image);
+    setFileName(imageData.fileName);
+  };
 
-      // Convert image to base64
-      const base64Image = await convertToBase64(imageData.uri);
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === 'android'); // Ensure picker is hidden on Android after date selection
+    if (selectedDate) {
+      // Extract year, month, and day directly from the date object
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth() + 1; // JavaScript months are 0-indexed
+      const day = selectedDate.getDate();
 
-      // Show form after image is selected
-      setShowForm(true);
+      // Construct a date string in YYYY-MM-DD format
+      const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day
+        .toString()
+        .padStart(2, '0')}`;
 
-      // Save the base64 image and file name to state for later use
-      setBase64Image(base64Image);
-      setFileName(imageData.fileName);
-    } catch (error) {
-      console.error('Image processing error:', error);
-      Alert.alert('Processing Failed', error.message);
+      setFormData(prevState => ({
+        ...prevState,
+        date: formattedDate,
+      }));
+      setShowDatePicker(false);
     }
   };
 
   const handleFormSubmit = async () => {
-    try {
-      // Validate form data
-      if (!formData.date || !formData.price || !formData.category) {
-        Alert.alert('Validation Error', 'Please fill all the fields.');
-        return;
-      }
+    if (!formData.date || !formData.price || !formData.category) {
+      Alert.alert('Validation Error', 'Please fill all the fields.');
+      return;
+    }
 
-      // Prepare payload with form data and image data
-      const payload = {
-        imageData: base64Image,
-        userId: 'chad', // This will be updated to the Cognito user ID
-        fileName: fileName,
-        date: formData.date,
-        price: formData.price,
-        category: formData.category,
-      };
+    const payload = {
+      imageData: base64Image,
+      userId: 'chad',
+      fileName: fileName,
+      date: formData.date,
+      price: formData.price,
+      category: formData.category,
+    };
 
-      // Send to Lambda
-      const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+    const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setImageUrl(data.url);
+      Alert.alert(
+        'Upload Successful',
+        `File uploaded successfully: ${data.url}`,
+      );
+      setShowForm(false);
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        price: '',
+        category: '',
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setImageUrl(data.url); // Set the image URL to state
-        Alert.alert(
-          'Upload Successful',
-          `File uploaded successfully: ${data.url}`,
-        );
-        setShowForm(false); // Hide form after successful upload
-        setFormData({date: '', price: '', category: ''}); // Reset form data
-      } else {
-        const errorText = await response.text();
-        throw new Error(`Failed to upload image: ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      Alert.alert('Upload Failed', error.message);
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Failed to upload image: ${errorText}`);
     }
   };
 
@@ -135,44 +151,61 @@ const ReceiptUploadScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Button title="Take Photo" onPress={handleTakePhoto} />
-      <Button title="Select Photo from Gallery" onPress={handleSelectPhoto} />
-      {imageUrl && (
-        <TouchableOpacity onPress={() => Linking.openURL(imageUrl)}>
-          <Image
-            source={{uri: imageUrl}}
-            style={styles.image}
-            resizeMode="contain"
-          />
-          <Text style={styles.linkText}>View Image</Text>
-        </TouchableOpacity>
-      )}
-      {showForm && (
-        <View style={styles.formContainer}>
-          <TextInput
-            placeholder="Date"
-            value={formData.date}
-            onChangeText={text => setFormData({...formData, date: text})}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Price"
-            value={formData.price}
-            onChangeText={text => setFormData({...formData, price: text})}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Category"
-            value={formData.category}
-            onChangeText={text => setFormData({...formData, category: text})}
-            style={styles.input}
-          />
-          <Button title="Submit" onPress={handleFormSubmit} />
-        </View>
-      )}
-    </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <Button title="Take Photo" onPress={handleTakePhoto} />
+        <Button title="Select Photo from Gallery" onPress={handleSelectPhoto} />
+        {imageUrl && (
+          <TouchableOpacity onPress={() => Linking.openURL(imageUrl)}>
+            <Image
+              source={{uri: imageUrl}}
+              style={styles.image}
+              resizeMode="contain"
+            />
+            <Text style={styles.linkText}>View Image</Text>
+          </TouchableOpacity>
+        )}
+        {showForm && (
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Date</Text>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={styles.dateInput}>
+              <Text style={styles.inputText}>
+                {formData.date || 'Select Date'}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date(formData.date)}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()} // Optional: Prevent future dates
+              />
+            )}
+            <Text style={styles.label}>Price</Text>
+            <TextInput
+              placeholder="Price"
+              value={formData.price}
+              onChangeText={text => setFormData({...formData, price: text})}
+              keyboardType="numeric"
+              style={styles.input}
+              returnKeyType="done" // Adds a "Done" button to the keyboard
+            />
+            <Text style={styles.label}>Category</Text>
+            <TextInput
+              placeholder="Category"
+              value={formData.category}
+              onChangeText={text => setFormData({...formData, category: text})}
+              style={styles.input}
+              returnKeyType="done" // Adds a "Done" button to the keyboard
+            />
+            <Button title="Submit" onPress={handleFormSubmit} />
+          </View>
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -182,6 +215,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#333', // Ensuring the background is slightly darker
   },
   image: {
     width: 300,
@@ -200,6 +234,13 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
   },
+  label: {
+    alignSelf: 'flex-start',
+    marginLeft: 10,
+    marginBottom: 5,
+    fontWeight: 'bold',
+    color: '#fff', // White color for labels for better visibility
+  },
   input: {
     height: 40,
     borderColor: 'gray',
@@ -207,6 +248,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingLeft: 8,
     width: '100%',
+    color: '#fff', // White text for inputs
+    backgroundColor: '#555', // Darker input background for contrast
+  },
+  dateInput: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    justifyContent: 'center',
+    paddingLeft: 8,
+    width: '100%',
+  },
+  inputText: {
+    color: '#fff', // Ensuring the text inside the date picker is also white
   },
 });
 
@@ -222,14 +277,26 @@ export default ReceiptUploadScreen;
 //   TouchableOpacity,
 //   Text,
 //   Linking,
+//   TextInput,
+//   Platform,
 // } from 'react-native';
 // import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 // import Config from 'react-native-config';
 // import AuthContext from '../services/AuthContext';
+// import DateTimePicker from '@react-native-community/datetimepicker';
 
 // const ReceiptUploadScreen = () => {
 //   const {token} = useContext(AuthContext);
 //   const [imageUrl, setImageUrl] = useState(null);
+//   const [formData, setFormData] = useState({
+//     date: new Date().toISOString().split('T')[0], // Initialize date to today's date
+//     price: '',
+//     category: '',
+//   });
+//   const [showForm, setShowForm] = useState(false);
+//   const [base64Image, setBase64Image] = useState(null);
+//   const [fileName, setFileName] = useState(null);
+//   const [showDatePicker, setShowDatePicker] = useState(false);
 
 //   const handleTakePhoto = () => {
 //     const options = {
@@ -263,46 +330,82 @@ export default ReceiptUploadScreen;
 //   };
 
 //   const processImage = async imageData => {
-//     try {
-//       if (!imageData || !imageData.fileName || !imageData.uri) {
-//         Alert.alert('Upload Failed', 'Image data is incomplete.');
-//         return;
-//       }
+//     if (!imageData || !imageData.fileName || !imageData.uri) {
+//       Alert.alert('Upload Failed', 'Image data is incomplete.');
+//       return;
+//     }
+//     const base64Image = await convertToBase64(imageData.uri);
+//     setShowForm(true);
+//     setBase64Image(base64Image);
+//     setFileName(imageData.fileName);
+//   };
 
-//       // Convert image to base64
-//       const base64Image = await convertToBase64(imageData.uri);
+//   const handleDateChange = (event, selectedDate) => {
+//     setShowDatePicker(Platform.OS === 'android'); // Ensure picker is hidden on Android after date selection
+//     if (selectedDate) {
+//       // Extract year, month, and day from the selected date
+//       const year = selectedDate.getFullYear();
+//       const month = selectedDate.getMonth() + 1; // getMonth returns a zero-based index
+//       const day = selectedDate.getDate();
 
-//       // Prepare payload
-//       const payload = {
-//         imageData: base64Image,
-//         userId: 'chad',
-//         fileName: imageData.fileName,
-//       };
+//       // Format month and day to ensure they are always two digits
+//       const formattedMonth = month < 10 ? `0${month}` : month;
+//       const formattedDay = day < 10 ? `0${day}` : day;
 
-//       // Send to Lambda
-//       const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify(payload),
+//       // Construct the date string in YYYY-MM-DD format
+//       const formattedDate = `${year}-${formattedMonth}-${formattedDay}`;
+
+//       // Update the formData state with the new date
+//       setFormData(prevState => ({
+//         ...prevState,
+//         date: formattedDate,
+//       }));
+
+//       // Hide the DatePicker
+//       setShowDatePicker(false);
+//     }
+//   };
+
+//   const handleFormSubmit = async () => {
+//     if (!formData.date || !formData.price || !formData.category) {
+//       Alert.alert('Validation Error', 'Please fill all the fields.');
+//       return;
+//     }
+
+//     const payload = {
+//       imageData: base64Image,
+//       userId: 'chad',
+//       fileName: fileName,
+//       date: formData.date,
+//       price: formData.price,
+//       category: formData.category,
+//     };
+
+//     const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify(payload),
+//     });
+
+//     if (response.ok) {
+//       const data = await response.json();
+//       setImageUrl(data.url);
+//       Alert.alert(
+//         'Upload Successful',
+//         `File uploaded successfully: ${data.url}`,
+//       );
+//       setShowForm(false);
+//       setFormData({
+//         date: new Date().toISOString().split('T')[0],
+//         price: '',
+//         category: '',
 //       });
-
-//       if (response.ok) {
-//         const data = await response.json();
-//         setImageUrl(data.url); // Set the image URL to state
-//         Alert.alert(
-//           'Upload Successful',
-//           `File uploaded successfully: ${data.url}`,
-//         );
-//       } else {
-//         const errorText = await response.text();
-//         throw new Error(`Failed to upload image: ${errorText}`);
-//       }
-//     } catch (error) {
-//       console.error('Upload error:', error);
-//       Alert.alert('Upload Failed', error.message);
+//     } else {
+//       const errorText = await response.text();
+//       throw new Error(`Failed to upload image: ${errorText}`);
 //     }
 //   };
 
@@ -331,6 +434,41 @@ export default ReceiptUploadScreen;
 //           <Text style={styles.linkText}>View Image</Text>
 //         </TouchableOpacity>
 //       )}
+//       {showForm && (
+//         <View style={styles.formContainer}>
+//           <Text style={styles.label}>Date</Text>
+//           <TouchableOpacity
+//             onPress={() => setShowDatePicker(true)}
+//             style={styles.dateInput}>
+//             <Text>{formData.date || 'Select Date'}</Text>
+//           </TouchableOpacity>
+//           {showDatePicker && (
+//             <DateTimePicker
+//               value={new Date(formData.date)}
+//               mode="date"
+//               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+//               onChange={handleDateChange}
+//               maximumDate={new Date()} // Optional: Prevent future dates
+//             />
+//           )}
+//           <Text style={styles.label}>Price</Text>
+//           <TextInput
+//             placeholder="Price"
+//             value={formData.price}
+//             onChangeText={text => setFormData({...formData, price: text})}
+//             keyboardType="numeric"
+//             style={styles.input}
+//           />
+//           <Text style={styles.label}>Category</Text>
+//           <TextInput
+//             placeholder="Category"
+//             value={formData.category}
+//             onChangeText={text => setFormData({...formData, category: text})}
+//             style={styles.input}
+//           />
+//           <Button title="Submit" onPress={handleFormSubmit} />
+//         </View>
+//       )}
 //     </View>
 //   );
 // };
@@ -354,119 +492,32 @@ export default ReceiptUploadScreen;
 //     marginTop: 10,
 //     textDecorationLine: 'underline',
 //   },
-// });
-
-// export default ReceiptUploadScreen;
-
-//Working backup, this works to upload and image to s3 using both the image upload and the camera upload but doesnt dispaly to screen but rather a popup the presigned url link click on the 3 ... to open this nested backup code
-// import React, {useContext} from 'react';
-// import {View, Button, StyleSheet, Alert} from 'react-native';
-// import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-// import Config from 'react-native-config';
-// import AuthContext from '../services/AuthContext';
-
-// const ReceiptUploadScreen = () => {
-//   const {token} = useContext(AuthContext);
-
-//   const handleTakePhoto = () => {
-//     const options = {
-//       saveToPhotos: true,
-//       mediaType: 'photo',
-//     };
-//     launchCamera(options, response => {
-//       if (response.didCancel) {
-//         console.log('User cancelled image picker');
-//       } else if (response.errorCode) {
-//         console.log('ImagePicker Error:', response.errorCode);
-//       } else {
-//         processImage(response.assets[0]);
-//       }
-//     });
-//   };
-
-//   const handleSelectPhoto = () => {
-//     const options = {
-//       mediaType: 'photo',
-//     };
-//     launchImageLibrary(options, response => {
-//       if (response.didCancel) {
-//         console.log('User cancelled image picker');
-//       } else if (response.errorCode) {
-//         console.log('ImagePicker Error:', response.errorCode);
-//       } else {
-//         processImage(response.assets[0]);
-//       }
-//     });
-//   };
-
-//   const processImage = async imageData => {
-//     try {
-//       if (!imageData || !imageData.fileName || !imageData.uri) {
-//         Alert.alert('Upload Failed', 'Image data is incomplete.');
-//         return;
-//       }
-
-//       // Convert image to base64
-//       const base64Image = await convertToBase64(imageData.uri);
-
-//       // Prepare payload
-//       const payload = {
-//         imageData: base64Image,
-//         userId: 'chad',
-//         fileName: imageData.fileName,
-//       };
-
-//       // Send to Lambda
-//       const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${token}`,
-//         },
-//         body: JSON.stringify(payload),
-//       });
-
-//       if (response.ok) {
-//         const data = await response.json();
-//         Alert.alert(
-//           'Upload Successful',
-//           `File uploaded successfully: ${data.url}`,
-//         );
-//       } else {
-//         const errorText = await response.text();
-//         throw new Error(`Failed to upload image: ${errorText}`);
-//       }
-//     } catch (error) {
-//       console.error('Upload error:', error);
-//       Alert.alert('Upload Failed', error.message);
-//     }
-//   };
-
-//   const convertToBase64 = async uri => {
-//     const response = await fetch(uri);
-//     const blob = await response.blob();
-//     return new Promise((resolve, reject) => {
-//       const reader = new FileReader();
-//       reader.onloadend = () => resolve(reader.result.split(',')[1]);
-//       reader.onerror = error => reject(error);
-//       reader.readAsDataURL(blob);
-//     });
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Button title="Take Photo" onPress={handleTakePhoto} />
-//       <Button title="Select Photo from Gallery" onPress={handleSelectPhoto} />
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
+//   formContainer: {
+//     marginTop: 20,
+//     width: '100%',
+//     padding: 10,
+//   },
+//   label: {
+//     alignSelf: 'flex-start',
+//     marginLeft: 10,
+//     marginBottom: 5,
+//     fontWeight: 'bold',
+//   },
+//   input: {
+//     height: 40,
+//     borderColor: 'gray',
+//     borderWidth: 1,
+//     marginBottom: 10,
+//     paddingLeft: 8,
+//     width: '100%',
+//   },
+//   dateInput: {
+//     height: 40,
+//     borderColor: 'gray',
+//     borderWidth: 1,
+//     marginBottom: 10,
 //     justifyContent: 'center',
-//     alignItems: 'center',
-//     padding: 20,
+//     paddingLeft: 8,
 //   },
 // });
 
