@@ -1,6 +1,6 @@
 // // SignInScreen.js
 import React, {useState, useContext} from 'react';
-import {View, TextInput, Button, Alert} from 'react-native';
+import {View, TextInput, Button, Alert, Text} from 'react-native';
 import {signIn} from '../services/authServices';
 import AuthContext from '../services/AuthContext';
 import styles from '../styles/styles'; // Import common styles
@@ -23,12 +23,14 @@ const SignInScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>Username:</Text>
       <TextInput
         value={username}
         onChangeText={setUsername}
         placeholder="Username"
         style={styles.input}
       />
+      <Text style={styles.label}>Password:</Text>
       <TextInput
         value={password}
         onChangeText={setPassword}

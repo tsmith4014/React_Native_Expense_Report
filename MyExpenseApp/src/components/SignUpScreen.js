@@ -1,8 +1,8 @@
 //SignUpScreen.js
 import React, {useState} from 'react';
-import {View, TextInput, Button, Alert} from 'react-native';
+import {View, TextInput, Button, Alert, Text} from 'react-native';
 import {signUp} from '../services/authServices';
-import styles from '../styles/styles'; // Import common styles
+import styles from '../styles/styles';
 
 const SignUpScreen = ({navigation}) => {
   const [username, setUsername] = useState('');
@@ -36,6 +36,7 @@ const SignUpScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>Username:</Text>
       <TextInput
         value={username}
         onChangeText={setUsername}
@@ -43,6 +44,7 @@ const SignUpScreen = ({navigation}) => {
         style={styles.input}
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Email:</Text>
       <TextInput
         value={email}
         onChangeText={setEmail}
@@ -51,6 +53,7 @@ const SignUpScreen = ({navigation}) => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Nickname:</Text>
       <TextInput
         value={nickname}
         onChangeText={setNickname}
@@ -58,6 +61,7 @@ const SignUpScreen = ({navigation}) => {
         style={styles.input}
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Phone Number:</Text>
       <TextInput
         value={phoneNumber}
         onChangeText={setPhoneNumber}
@@ -66,6 +70,7 @@ const SignUpScreen = ({navigation}) => {
         keyboardType="phone-pad"
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Password:</Text>
       <TextInput
         value={password}
         onChangeText={setPassword}

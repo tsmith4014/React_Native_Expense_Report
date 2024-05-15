@@ -1,6 +1,6 @@
 //ConfirmSignUpScreen.js
 import React, {useState} from 'react';
-import {View, TextInput, Button, Alert} from 'react-native';
+import {View, TextInput, Button, Alert, Text} from 'react-native';
 import {confirmUser, resendConfirmationCode} from '../services/authServices';
 import styles from '../styles/styles'; // Import common styles
 
@@ -32,6 +32,7 @@ const ConfirmSignUpScreen = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>Verification Code</Text>
       <TextInput
         value={code}
         onChangeText={setCode}
@@ -40,11 +41,15 @@ const ConfirmSignUpScreen = ({route, navigation}) => {
         keyboardType="number-pad"
       />
       <View style={styles.buttonContainer}>
-        <Button title="Verify Account" onPress={handleConfirmSignUp} />
+        <Button
+          title="Verify Account"
+          onPress={handleConfirmSignUp}
+          color={styles.button.color}
+        />
         <Button
           title="Resend Code"
           onPress={handleResendCode}
-          color="#007BFF"
+          color={styles.textButton.color}
         />
       </View>
     </View>

@@ -1,5 +1,5 @@
 # Define the minimum iOS version supported
-min_ios_version_supported = '17.0' # Changed to 13.0 for broader compatibility
+min_ios_version_supported = '17.0' 
 
 platform :ios, min_ios_version_supported
 
