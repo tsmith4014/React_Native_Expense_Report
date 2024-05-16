@@ -97,7 +97,6 @@ const ReceiptUploadScreen = () => {
 
     const payload = {
       imageData: base64Image,
-      userId: 'chad',
       fileName: fileName,
       date: formData.date,
       price: formData.price,
@@ -247,6 +246,256 @@ const ReceiptUploadScreen = () => {
 };
 
 export default ReceiptUploadScreen;
+
+//hardcode below but works
+// import React, {useContext, useState} from 'react';
+// import {
+//   View,
+//   Button,
+//   Alert,
+//   Image,
+//   TouchableOpacity,
+//   Text,
+//   TextInput,
+//   Linking,
+//   Platform,
+//   Keyboard,
+//   TouchableWithoutFeedback,
+//   Modal,
+// } from 'react-native';
+// import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+// import Config from 'react-native-config';
+// import AuthContext from '../services/AuthContext';
+// import DateTimePicker from '@react-native-community/datetimepicker';
+// import styles from '../styles/styles';
+// import {Picker} from '@react-native-picker/picker';
+
+// const ReceiptUploadScreen = () => {
+//   const {token} = useContext(AuthContext);
+//   const [imageUrl, setImageUrl] = useState(null);
+//   const [formData, setFormData] = useState({
+//     date: new Date().toISOString().split('T')[0],
+//     price: '',
+//     category: '',
+//   });
+//   const [showForm, setShowForm] = useState(false);
+//   const [base64Image, setBase64Image] = useState(null);
+//   const [fileName, setFileName] = useState(null);
+//   const [showDatePicker, setShowDatePicker] = useState(false);
+//   const [showPicker, setShowPicker] = useState(false);
+//   const [selectedCategory, setSelectedCategory] = useState();
+
+//   const handleTakePhoto = () => {
+//     const options = {saveToPhotos: true, mediaType: 'photo'};
+//     launchCamera(options, response => {
+//       if (response.didCancel) {
+//         console.log('User cancelled image picker');
+//       } else if (response.errorCode) {
+//         console.log('ImagePicker Error:', response.errorCode);
+//       } else {
+//         processImage(response.assets[0]);
+//       }
+//     });
+//   };
+
+//   const handleSelectPhoto = () => {
+//     const options = {mediaType: 'photo'};
+//     launchImageLibrary(options, response => {
+//       if (response.didCancel) {
+//         console.log('User cancelled image picker');
+//       } else if (response.errorCode) {
+//         console.log('ImagePicker Error:', response.errorCode);
+//       } else {
+//         processImage(response.assets[0]);
+//       }
+//     });
+//   };
+
+//   const processImage = async imageData => {
+//     if (!imageData || !imageData.fileName || !imageData.uri) {
+//       Alert.alert('Upload Failed', 'Image data is incomplete.');
+//       return;
+//     }
+//     const base64Image = await convertToBase64(imageData.uri);
+//     setShowForm(true);
+//     setBase64Image(base64Image);
+//     setFileName(imageData.fileName);
+//   };
+
+//   const handleDateChange = (event, selectedDate) => {
+//     setShowDatePicker(Platform.OS === 'android');
+//     if (selectedDate) {
+//       const formattedDate = `${selectedDate.getFullYear()}-${(
+//         selectedDate.getMonth() + 1
+//       )
+//         .toString()
+//         .padStart(2, '0')}-${selectedDate
+//         .getDate()
+//         .toString()
+//         .padStart(2, '0')}`;
+//       setFormData(prevState => ({...prevState, date: formattedDate}));
+//       setShowDatePicker(false);
+//     }
+//   };
+
+//   const handleFormSubmit = async () => {
+//     if (!formData.date || !formData.price || !selectedCategory) {
+//       Alert.alert('Validation Error', 'Please fill all the fields.');
+//       return;
+//     }
+
+//     const payload = {
+//       imageData: base64Image,
+//       userId: 'chad',
+//       fileName: fileName,
+//       date: formData.date,
+//       price: formData.price,
+//       category: selectedCategory,
+//     };
+
+//     const response = await fetch(Config.IMAGE_UPLOAD_ENDPOINT, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify(payload),
+//     });
+
+//     if (response.ok) {
+//       const data = await response.json();
+//       setImageUrl(data.url);
+//       Alert.alert(
+//         'Upload Successful',
+//         `File uploaded successfully: ${data.url}`,
+//       );
+//       setShowForm(false);
+//       setFormData({
+//         date: new Date().toISOString().split('T')[0],
+//         price: '',
+//         category: '',
+//       });
+//       setSelectedCategory(null);
+//       setShowPicker(false);
+//     } else {
+//       const errorText = await response.text();
+//       throw new Error(`Failed to upload image: ${errorText}`);
+//     }
+//   };
+
+//   const convertToBase64 = async uri => {
+//     const response = await fetch(uri);
+//     const blob = await response.blob();
+//     return new Promise((resolve, reject) => {
+//       const reader = new FileReader();
+//       reader.onloadend = () => resolve(reader.result.split(',')[1]);
+//       reader.onerror = error => reject(error);
+//       reader.readAsDataURL(blob);
+//     });
+//   };
+
+//   return (
+//     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+//       <View style={styles.container}>
+//         <Button title="Take Photo" onPress={handleTakePhoto} />
+//         <Button title="Select Photo from Gallery" onPress={handleSelectPhoto} />
+//         {imageUrl && (
+//           <TouchableOpacity
+//             onPress={() => Linking.openURL(imageUrl)}
+//             style={styles.imageContainer}>
+//             <Image
+//               source={{uri: imageUrl}}
+//               style={styles.image}
+//               resizeMode="contain"
+//             />
+//             <Text style={styles.linkText}>View Image</Text>
+//           </TouchableOpacity>
+//         )}
+//         {showForm && (
+//           <View style={styles.formContainer}>
+//             <Text style={styles.label}>Date</Text>
+//             <TouchableOpacity
+//               onPress={() => setShowDatePicker(true)}
+//               style={styles.dateInput}>
+//               <Text style={styles.inputText}>
+//                 {formData.date || 'Select Date'}
+//               </Text>
+//             </TouchableOpacity>
+//             {showDatePicker && (
+//               <DateTimePicker
+//                 value={new Date(formData.date)}
+//                 mode="date"
+//                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+//                 onChange={handleDateChange}
+//                 maximumDate={new Date()}
+//               />
+//             )}
+//             <Text style={styles.label}>Price</Text>
+//             <TextInput
+//               placeholder="Price"
+//               value={formData.price}
+//               onChangeText={text => setFormData({...formData, price: text})}
+//               keyboardType="numeric"
+//               style={styles.input}
+//               returnKeyType="done"
+//             />
+//             <Text style={styles.label}>Category</Text>
+//             <TouchableOpacity
+//               style={styles.input}
+//               onPress={() => setShowPicker(true)}>
+//               <Text style={styles.pickerInputText}>
+//                 {selectedCategory || 'Select Category'}
+//               </Text>
+//             </TouchableOpacity>
+//             <Modal
+//               animationType="slide"
+//               transparent={true}
+//               visible={showPicker}
+//               onRequestClose={() => setShowPicker(!showPicker)}>
+//               <View style={styles.pickerContainer}>
+//                 <Picker
+//                   selectedValue={selectedCategory}
+//                   onValueChange={(itemValue, itemIndex) =>
+//                     setSelectedCategory(itemValue)
+//                   }
+//                   style={styles.picker}>
+//                   <Picker.Item label="Airfare" value="Airfare" />
+//                   <Picker.Item label="Car Rental" value="Car Rental" />
+//                   <Picker.Item
+//                     label="Local Transportation"
+//                     value="Local Transportation"
+//                   />
+//                   <Picker.Item label="Tolls/Parking" value="Tolls/Parking" />
+//                   <Picker.Item label="Car Expense" value="Car Expense" />
+//                   <Picker.Item label="Gas" value="Gas" />
+//                   <Picker.Item label="Hotel" value="Hotel" />
+//                   <Picker.Item label="Telephone" value="Telephone" />
+//                   <Picker.Item label="Business Meals" value="Business Meals" />
+//                   <Picker.Item label="Entertainment" value="Entertainment" />
+//                   <Picker.Item
+//                     label="Office Supplies"
+//                     value="Office Supplies"
+//                   />
+//                   <Picker.Item label="Postage" value="Postage" />
+//                   <Picker.Item label="Tips" value="Tips" />
+//                   <Picker.Item label="Other" value="Other" />
+//                 </Picker>
+//                 <Button title="Done" onPress={() => setShowPicker(false)} />
+//               </View>
+//             </Modal>
+//             <Button
+//               title="Submit Receipt"
+//               onPress={handleFormSubmit}
+//               color="#007BFF"
+//             />
+//           </View>
+//         )}
+//       </View>
+//     </TouchableWithoutFeedback>
+//   );
+// };
+
+// export default ReceiptUploadScreen;
 
 // import React, {useContext, useState} from 'react';
 // import {
