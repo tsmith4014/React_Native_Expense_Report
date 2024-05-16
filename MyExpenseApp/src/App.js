@@ -1,4 +1,3 @@
-// // App.js
 // App.js
 import React from 'react';
 import {NavigationContainer, DefaultTheme} from '@react-navigation/native';
