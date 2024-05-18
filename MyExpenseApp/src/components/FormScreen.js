@@ -1,4 +1,4 @@
-// // FormScreen.js this code works and hits the API Gateway endpoint and lambda tiggers correctly
+//FormScreen.js
 import Config from 'react-native-config';
 import React, {useState, useContext} from 'react';
 import {
@@ -6,15 +6,15 @@ import {
   View,
   Text,
   TextInput,
-  Switch,
   Button,
   Alert,
+  Switch,
 } from 'react-native';
 import axios from 'axios';
 import AuthContext from '../services/AuthContext';
-import styles from '../styles/styles'; // Import common styles
+import styles from '../styles/styles';
 
-const FormScreen = ({route}) => {
+const FormScreen = () => {
   const {token} = useContext(AuthContext);
 
   const [employeeDepartment, setEmployeeDepartment] = useState('');
@@ -24,6 +24,9 @@ const FormScreen = ({route}) => {
   const [travel, setTravel] = useState(false);
   const [travelStartDate, setTravelStartDate] = useState('');
   const [travelEndDate, setTravelEndDate] = useState('');
+
+  console.log('EC2 endpoint: ', Config.EC_ENDPOINT);
+  console.log('first endpoint: ', Config.API_ENDPOINT);
 
   const handleSubmit = async () => {
     const payload = {
@@ -37,7 +40,7 @@ const FormScreen = ({route}) => {
     };
 
     try {
-      const response = await axios.post(Config.API_ENDPOINT, payload, {
+      const response = await axios.post(Config.EC_ENDPOINT, payload, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -131,7 +134,7 @@ const FormScreen = ({route}) => {
 
 export default FormScreen;
 
-//below contains css where above the css has been pull into styles.cs
+// // // FormScreen.js this code works and hits the API Gateway endpoint and lambda tiggers correctly
 // import Config from 'react-native-config';
 // import React, {useState, useContext} from 'react';
 // import {
@@ -141,11 +144,11 @@ export default FormScreen;
 //   TextInput,
 //   Switch,
 //   Button,
-//   StyleSheet,
 //   Alert,
 // } from 'react-native';
 // import axios from 'axios';
 // import AuthContext from '../services/AuthContext';
+// import styles from '../styles/styles'; // Import common styles
 
 // const FormScreen = ({route}) => {
 //   const {token} = useContext(AuthContext);
@@ -170,16 +173,12 @@ export default FormScreen;
 //     };
 
 //     try {
-//       const response = await axios.post(
-//         Config.API_ENDPOINT, // Use the API_ENDPOINT from .env
-//         payload,
-//         {
-//           headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${token}`,
-//           },
+//       const response = await axios.post(Config.API_ENDPOINT, payload, {
+//         headers: {
+//           'Content-Type': 'application/json',
+//           Authorization: `Bearer ${token}`,
 //         },
-//       );
+//       });
 
 //       Alert.alert('Success', 'Form submitted successfully');
 //       console.log(response.data);
@@ -190,7 +189,7 @@ export default FormScreen;
 //   };
 
 //   return (
-//     <ScrollView style={styles.container}>
+//     <ScrollView style={styles.scrollView}>
 //       <View style={styles.formGroup}>
 //         <Text style={styles.label}>Employee/Department:</Text>
 //         <TextInput
@@ -200,7 +199,6 @@ export default FormScreen;
 //           placeholder="Employee/Department"
 //         />
 //       </View>
-
 //       <View style={styles.formGroup}>
 //         <Text style={styles.label}>School:</Text>
 //         <TextInput
@@ -210,7 +208,6 @@ export default FormScreen;
 //           placeholder="School"
 //         />
 //       </View>
-
 //       <View style={styles.formGroup}>
 //         <Text style={styles.label}>Period Ending (YYYY-MM-DD):</Text>
 //         <TextInput
@@ -220,7 +217,6 @@ export default FormScreen;
 //           placeholder="YYYY-MM-DD"
 //         />
 //       </View>
-
 //       <View style={styles.formGroup}>
 //         <Text style={styles.label}>Trip Purpose:</Text>
 //         <TextInput
@@ -230,14 +226,16 @@ export default FormScreen;
 //           placeholder="Trip Purpose"
 //         />
 //       </View>
-
 //       <View style={styles.formGroup}>
 //         <Text style={styles.label}>
 //           Travel (includes per diem *not implemented*):
 //         </Text>
-//         <Switch value={travel} onValueChange={setTravel} />
+//         <Switch
+//           style={styles.switchBase}
+//           value={travel}
+//           onValueChange={setTravel}
+//         />
 //       </View>
-
 //       {travel && (
 //         <>
 //           <View style={styles.formGroup}>
@@ -249,7 +247,6 @@ export default FormScreen;
 //               placeholder="YYYY-MM-DD"
 //             />
 //           </View>
-
 //           <View style={styles.formGroup}>
 //             <Text style={styles.label}>Travel End Date (YYYY-MM-DD):</Text>
 //             <TextInput
@@ -261,34 +258,11 @@ export default FormScreen;
 //           </View>
 //         </>
 //       )}
-
-//       <Button title="Submit" onPress={handleSubmit} color="#555" />
+//       <View style={styles.buttonContainer}>
+//         <Button title="Submit" onPress={handleSubmit} color="#555" />
+//       </View>
 //     </ScrollView>
 //   );
 // };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#333',
-//     padding: 20,
-//   },
-//   formGroup: {
-//     marginBottom: 20,
-//   },
-//   label: {
-//     color: '#fff',
-//     marginBottom: 5,
-//   },
-//   input: {
-//     backgroundColor: '#222',
-//     color: '#ddd',
-//     paddingHorizontal: 10,
-//     paddingVertical: 8,
-//     borderRadius: 4,
-//     borderWidth: 1,
-//     borderColor: '#555',
-//   },
-// });
 
 // export default FormScreen;
