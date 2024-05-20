@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Function to print and execute commands
 execute() {
   echo "$ $*"
@@ -9,7 +7,7 @@ execute() {
 }
 
 # Change to the ios directory
-execute cd ios
+execute cd ../MyExpenseApp/ios
 
 # Remove build directory
 execute rm -rf build
